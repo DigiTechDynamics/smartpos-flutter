@@ -46,6 +46,8 @@ dependencies:
   sqlite3_flutter_libs: any
   shared_preferences: any
   flutter_secure_storage: any
+  firebase_core: any
+  cloud_firestore: any
 
   # Networking
   dio: any

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'core/services/service_locator.dart';
 import 'presentation/themes/app_theme.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
@@ -10,6 +11,11 @@ import 'core/routes/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('Firebase initialization skipped or failed (config not loaded yet): $e');
+  }
   await initServiceLocator();
   runApp(const SmartPOSApp());
 }
