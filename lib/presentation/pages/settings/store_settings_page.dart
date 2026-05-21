@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/service_locator.dart';
+import '../../../domain/repositories/settings_repository.dart';
 
 class StoreSettingsPage extends StatefulWidget {
   const StoreSettingsPage({super.key});
@@ -15,21 +17,56 @@ class _StoreSettingsPageState extends State<StoreSettingsPage> {
   final _taxRateController = TextEditingController(text: '15.0');
   final _footerController = TextEditingController(text: 'Thank you for shopping with us!');
   String _selectedCurrency = 'USD';
+  
+  bool _isLoading = true;
 
-  void _save() {
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final repo = sl<SettingsRepository>();
+    final settings = await repo.getAllSettings();
+    setState(() {
+      if (settings.containsKey('store_name')) _nameController.text = settings['store_name']!;
+      if (settings.containsKey('store_address')) _addressController.text = settings['store_address']!;
+      if (settings.containsKey('store_phone')) _phoneController.text = settings['store_phone']!;
+      if (settings.containsKey('tax_rate')) _taxRateController.text = settings['tax_rate']!;
+      if (settings.containsKey('receipt_footer')) _footerController.text = settings['receipt_footer']!;
+      if (settings.containsKey('currency')) _selectedCurrency = settings['currency']!;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _save() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Store configuration updated!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
+      final repo = sl<SettingsRepository>();
+      await repo.saveSetting('store_name', _nameController.text);
+      await repo.saveSetting('store_address', _addressController.text);
+      await repo.saveSetting('store_phone', _phoneController.text);
+      await repo.saveSetting('tax_rate', _taxRateController.text);
+      await repo.saveSetting('receipt_footer', _footerController.text);
+      await repo.saveSetting('currency', _selectedCurrency);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Store configuration updated!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Store Configuration'),
@@ -97,6 +134,11 @@ class _StoreSettingsPageState extends State<StoreSettingsPage> {
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (val) {
+                  if (val == null || val.isEmpty) return 'Required';
+                  if (double.tryParse(val) == null) return 'Must be a number';
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(

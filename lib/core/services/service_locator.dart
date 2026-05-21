@@ -63,7 +63,7 @@ Future<void> initServiceLocator() async {
 
   // Register BLoCs
   sl.registerFactory<AuthBloc>(() => AuthBloc(sl<UserRepository>()));
-  sl.registerFactory<SaleBloc>(() => SaleBloc(sl<CreateSaleUseCase>()));
+  sl.registerFactory<SaleBloc>(() => SaleBloc(sl<CreateSaleUseCase>(), sl<SettingsRepository>()));
   sl.registerFactory<ReportsBloc>(() => ReportsBloc(sl<AnalyticsService>()));
 
   // Seed default admin user if database is empty

@@ -8,6 +8,22 @@ import 'package:smartpos/data/databases/app_database.dart';
 import 'package:smartpos/domain/repositories/sale_repository.dart';
 import 'package:smartpos/domain/repositories/inventory_repository.dart';
 import 'package:smartpos/domain/repositories/user_repository.dart';
+import 'package:smartpos/domain/repositories/settings_repository.dart';
+
+class MockSettingsRepository implements SettingsRepository {
+  final Map<String, String> _settings = {'tax_rate': '15.0'};
+
+  @override
+  Future<String?> getSetting(String key) async => _settings[key];
+
+  @override
+  Future<void> saveSetting(String key, String value) async {
+    _settings[key] = value;
+  }
+
+  @override
+  Future<Map<String, String>> getAllSettings() async => _settings;
+}
 
 class MockCreateSaleUseCase implements CreateSaleUseCase {
   bool executeShouldFail = false;
@@ -35,7 +51,7 @@ class MockCreateSaleUseCase implements CreateSaleUseCase {
       tax: tax,
       discount: params.discountAmount,
       total: subtotal + tax - params.discountAmount,
-      paymentMethod: params.paymentMethod,
+      paymentMethod: params.payments.length > 1 ? 'split' : params.payments.first.method,
       userId: 'user_1',
       createdAt: DateTime.now().millisecondsSinceEpoch,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
@@ -46,11 +62,13 @@ class MockCreateSaleUseCase implements CreateSaleUseCase {
 
 void main() {
   late MockCreateSaleUseCase mockCreateSaleUseCase;
+  late MockSettingsRepository mockSettingsRepository;
   late Product testProduct1;
   late Product testProduct2;
 
   setUp(() {
     mockCreateSaleUseCase = MockCreateSaleUseCase();
+    mockSettingsRepository = MockSettingsRepository();
     testProduct1 = Product(
       id: 'prod1',
       sku: 'sku1',
@@ -77,7 +95,7 @@ void main() {
 
   blocTest<SaleBloc, SaleState>(
     'should emit [SaleInProgress] with correct calculations when adding product to cart',
-    build: () => SaleBloc(mockCreateSaleUseCase),
+    build: () => SaleBloc(mockCreateSaleUseCase, mockSettingsRepository),
     act: (bloc) => bloc.add(AddItemToCart(testProduct1, 2.0)),
     expect: () => [
       isA<SaleInProgress>(),
@@ -93,7 +111,7 @@ void main() {
 
   blocTest<SaleBloc, SaleState>(
     'should emit [SaleInProgress, SaleInitial] when adding then clearing cart',
-    build: () => SaleBloc(mockCreateSaleUseCase),
+    build: () => SaleBloc(mockCreateSaleUseCase, mockSettingsRepository),
     act: (bloc) => bloc
       ..add(AddItemToCart(testProduct1, 1.0))
       ..add(ClearCart()),
@@ -105,7 +123,7 @@ void main() {
 
   blocTest<SaleBloc, SaleState>(
     'should emit [SaleInProgress] with updated quantity when adding existing product',
-    build: () => SaleBloc(mockCreateSaleUseCase),
+    build: () => SaleBloc(mockCreateSaleUseCase, mockSettingsRepository),
     act: (bloc) => bloc
       ..add(AddItemToCart(testProduct1, 1.0))
       ..add(AddItemToCart(testProduct1, 2.0)),
@@ -123,7 +141,7 @@ void main() {
 
   blocTest<SaleBloc, SaleState>(
     'should emit [SaleInProgress] showing correct total discount and total when discount applied',
-    build: () => SaleBloc(mockCreateSaleUseCase),
+    build: () => SaleBloc(mockCreateSaleUseCase, mockSettingsRepository),
     act: (bloc) => bloc
       ..add(AddItemToCart(testProduct2, 1.0))
       ..add(ApplyDiscount(5.0)),
@@ -141,10 +159,10 @@ void main() {
 
   blocTest<SaleBloc, SaleState>(
     'should emit [SaleComplete] when ProcessPayment is successful',
-    build: () => SaleBloc(mockCreateSaleUseCase),
+    build: () => SaleBloc(mockCreateSaleUseCase, mockSettingsRepository),
     act: (bloc) => bloc
       ..add(AddItemToCart(testProduct1, 2.0)) // total = 20 + 3 = 23
-      ..add(ProcessPayment('cash', 25.0)),
+      ..add(ProcessPayment([SalePaymentInput(method: 'cash', amount: 25.0)])),
     expect: () => [
       isA<SaleInProgress>(),
       isA<SaleComplete>(),
@@ -158,10 +176,10 @@ void main() {
 
   blocTest<SaleBloc, SaleState>(
     'should emit [SaleError, SaleInProgress] when tendered amount is less than total',
-    build: () => SaleBloc(mockCreateSaleUseCase),
+    build: () => SaleBloc(mockCreateSaleUseCase, mockSettingsRepository),
     act: (bloc) => bloc
       ..add(AddItemToCart(testProduct1, 2.0)) // total = 23
-      ..add(ProcessPayment('cash', 20.0)),
+      ..add(ProcessPayment([SalePaymentInput(method: 'cash', amount: 20.0)])),
     expect: () => [
       isA<SaleInProgress>(),
       isA<SaleError>(),

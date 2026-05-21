@@ -1,7 +1,7 @@
-import '../../data/databases/app_database.dart';
+import '../../../data/databases/app_database.dart';
 
 abstract class SaleRepository {
-  Future<Sale> create(Sale sale, List<SaleItem> items, Payment payment);
+  Future<Sale> create(Sale sale, List<SaleItem> items, List<Payment> payments);
   Future<List<Sale>> getAll({int limit = 20, int offset = 0});
   Future<Sale?> getById(String id);
   Future<void> voidSale(String saleId, String reason);

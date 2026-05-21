@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/sale/sale_bloc.dart';
 import '../../bloc/sale/sale_event.dart';
 import '../../bloc/sale/sale_state.dart';
+import '../../../domain/usecases/sales/create_sale_usecase.dart';
 
 class QuickCheckoutPanel extends StatelessWidget {
   final SaleInProgress state;
@@ -69,7 +70,7 @@ class QuickCheckoutPanel extends StatelessWidget {
                 icon: Icons.money,
                 color: Colors.green,
                 onPressed: () {
-                  context.read<SaleBloc>().add(ProcessPayment('cash', total));
+                  context.read<SaleBloc>().add(ProcessPayment([SalePaymentInput(method: 'cash', amount: total)]));
                 },
               ),
             ),
@@ -81,7 +82,7 @@ class QuickCheckoutPanel extends StatelessWidget {
                 icon: Icons.credit_card,
                 color: Colors.indigo,
                 onPressed: () {
-                  context.read<SaleBloc>().add(ProcessPayment('card', total));
+                  context.read<SaleBloc>().add(ProcessPayment([SalePaymentInput(method: 'card', amount: total)]));
                 },
               ),
             ),
@@ -93,7 +94,7 @@ class QuickCheckoutPanel extends StatelessWidget {
                 icon: Icons.phone_android,
                 color: Colors.amber,
                 onPressed: () {
-                  context.read<SaleBloc>().add(ProcessPayment('mobile', total));
+                  context.read<SaleBloc>().add(ProcessPayment([SalePaymentInput(method: 'mobile', amount: total)]));
                 },
               ),
             ),
@@ -133,7 +134,7 @@ class QuickCheckoutPanel extends StatelessWidget {
                   side: BorderSide(color: Colors.green.shade200, width: 0.8),
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                   onPressed: () {
-                    context.read<SaleBloc>().add(ProcessPayment('cash', amount));
+                    context.read<SaleBloc>().add(ProcessPayment([SalePaymentInput(method: 'cash', amount: amount)]));
                   },
                 );
               },

@@ -8,15 +8,17 @@ import 'package:smartpos/data/databases/app_database.dart';
 class MockSaleRepository implements SaleRepository {
   Sale? lastSale;
   List<SaleItem>? lastItems;
+  List<Payment>? lastPayments;
   Payment? lastPayment;
   bool shouldFail = false;
 
   @override
-  Future<Sale> create(Sale sale, List<SaleItem> items, Payment payment) async {
+  Future<Sale> create(Sale sale, List<SaleItem> items, List<Payment> payments) async {
     if (shouldFail) throw Exception('Database error');
     lastSale = sale;
     lastItems = items;
-    lastPayment = payment;
+    lastPayments = payments;
+    lastPayment = payments.isNotEmpty ? payments.first : null;
     return sale;
   }
 
@@ -109,8 +111,9 @@ void main() {
         CartItem(productId: 'prod1', quantity: 2.0, unitPrice: 15.0),
         CartItem(productId: 'prod2', quantity: 1.0, unitPrice: 20.0),
       ],
-      paymentMethod: 'cash',
+      payments: [SalePaymentInput(method: 'cash', amount: 52.5)],
       discountAmount: 5.0,
+      taxRate: 0.15,
     );
 
     final sale = await useCase.execute(params);
@@ -134,7 +137,7 @@ void main() {
   test('should throw an exception when items list is empty', () async {
     final params = CreateSaleParams(
       items: [],
-      paymentMethod: 'card',
+      payments: [SalePaymentInput(method: 'card', amount: 0.0)],
     );
 
     expect(() => useCase.execute(params), throwsException);

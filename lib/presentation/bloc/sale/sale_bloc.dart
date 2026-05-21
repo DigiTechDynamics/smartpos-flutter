@@ -1,16 +1,20 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/usecases/sales/create_sale_usecase.dart';
+import '../../../domain/repositories/settings_repository.dart';
 import 'sale_event.dart';
 import 'sale_state.dart';
 
 class SaleBloc extends Bloc<SaleEvent, SaleState> {
   final CreateSaleUseCase createSaleUseCase;
+  final SettingsRepository settingsRepository;
   
   List<CartItem> _cartItems = [];
   double _discountAmount = 0;
   final List<List<CartItem>> _parkedSales = [];
+  
+  double _currentTaxRate = 0.15; // default fallback
 
-  SaleBloc(this.createSaleUseCase) : super(SaleInitial()) {
+  SaleBloc(this.createSaleUseCase, this.settingsRepository) : super(SaleInitial()) {
     on<AddItemToCart>(_onAddItem);
     on<RemoveItemFromCart>(_onRemoveItem);
     on<UpdateItemQuantity>(_onUpdateQuantity);
@@ -19,6 +23,15 @@ class SaleBloc extends Bloc<SaleEvent, SaleState> {
     on<ClearCart>(_onClearCart);
     on<ParkSale>(_onParkSale);
     on<RestoreParkedSale>(_onRestoreParkedSale);
+    
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final taxRateStr = await settingsRepository.getSetting('tax_rate');
+    if (taxRateStr != null) {
+      _currentTaxRate = (double.tryParse(taxRateStr) ?? 15.0) / 100.0;
+    }
   }
 
   void _onAddItem(AddItemToCart event, Emitter<SaleState> emit) {
@@ -72,12 +85,15 @@ class SaleBloc extends Bloc<SaleEvent, SaleState> {
   }
 
   Future<void> _onProcessPayment(ProcessPayment event, Emitter<SaleState> emit) async {
+    await _loadSettings(); // refresh tax right before payment
     final subtotal = _cartItems.fold(0.0, (sum, item) => sum + (item.quantity * item.unitPrice));
-    final tax = subtotal * 0.15;
+    final tax = subtotal * _currentTaxRate;
     final total = subtotal + tax - _discountAmount;
 
-    if (event.amountTendered < total && event.paymentMethod == 'cash') {
-      emit(SaleError('Amount tendered is less than total'));
+    final totalTendered = event.payments.fold(0.0, (sum, p) => sum + p.amount);
+
+    if (totalTendered < total) {
+      emit(SaleError('Total amount tendered is less than the sale total'));
       _emitInProgress(emit); // Revert to cart
       return;
     }
@@ -85,11 +101,12 @@ class SaleBloc extends Bloc<SaleEvent, SaleState> {
     try {
       final sale = await createSaleUseCase.execute(CreateSaleParams(
         items: _cartItems,
-        paymentMethod: event.paymentMethod,
+        payments: event.payments,
         discountAmount: _discountAmount,
+        taxRate: _currentTaxRate,
       ));
       
-      final change = event.amountTendered >= total ? event.amountTendered - total : 0.0;
+      final change = totalTendered >= total ? totalTendered - total : 0.0;
       
       // Clear cart
       _cartItems.clear();
@@ -138,7 +155,7 @@ class SaleBloc extends Bloc<SaleEvent, SaleState> {
     }
     
     final subtotal = _cartItems.fold(0.0, (sum, item) => sum + (item.quantity * item.unitPrice));
-    final tax = subtotal * 0.15;
+    final tax = subtotal * _currentTaxRate;
     final total = subtotal + tax - _discountAmount;
 
     emit(SaleInProgress(

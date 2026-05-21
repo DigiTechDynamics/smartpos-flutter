@@ -26,9 +26,8 @@ class ApplyDiscount extends SaleEvent {
 }
 
 class ProcessPayment extends SaleEvent {
-  final String paymentMethod;
-  final double amountTendered;
-  ProcessPayment(this.paymentMethod, this.amountTendered);
+  final List<SalePaymentInput> payments;
+  ProcessPayment(this.payments);
 }
 
 class ClearCart extends SaleEvent {}

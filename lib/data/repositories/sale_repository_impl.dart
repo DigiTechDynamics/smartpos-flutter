@@ -9,7 +9,7 @@ class SaleRepositoryImpl implements SaleRepository {
   SaleRepositoryImpl(this.db);
 
   @override
-  Future<Sale> create(Sale sale, List<SaleItem> items, Payment payment) async {
+  Future<Sale> create(Sale sale, List<SaleItem> items, List<Payment> payments) async {
     await db.transaction(() async {
       await db.into(db.sales).insert(sale);
       for (var item in items) {
@@ -62,7 +62,10 @@ class SaleRepositoryImpl implements SaleRepository {
           ),
         );
       }
-      await db.into(db.payments).insert(payment);
+      
+      for (var payment in payments) {
+        await db.into(db.payments).insert(payment);
+      }
       
       // Queue sync
       await db.into(db.syncQueue).insert(

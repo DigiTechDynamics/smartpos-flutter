@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartpos/domain/usecases/sales/create_sale_usecase.dart';
+import 'package:smartpos/domain/repositories/settings_repository.dart';
 import 'package:smartpos/presentation/bloc/sale/sale_bloc.dart';
 import 'package:smartpos/presentation/bloc/sale/sale_event.dart';
 import 'package:smartpos/presentation/bloc/sale/sale_state.dart';
@@ -12,11 +13,23 @@ class MockCreateSaleUseCase implements CreateSaleUseCase {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class MockSettingsRepository implements SettingsRepository {
+  @override
+  Future<String?> getSetting(String key) async => null;
+
+  @override
+  Future<void> saveSetting(String key, String value) async {}
+
+  @override
+  Future<Map<String, String>> getAllSettings() async => {};
+}
+
 class StubSaleBloc extends SaleBloc {
   final SaleState stubState;
   final List<SaleEvent> addedEvents = [];
 
-  StubSaleBloc(this.stubState) : super(MockCreateSaleUseCase());
+  StubSaleBloc(this.stubState)
+      : super(MockCreateSaleUseCase(), MockSettingsRepository());
 
   @override
   SaleState get state => stubState;
@@ -84,7 +97,8 @@ void main() {
 
     expect(stubSaleBloc.addedEvents.length, 1);
     final lastEvent = stubSaleBloc.addedEvents.last as ProcessPayment;
-    expect(lastEvent.paymentMethod, 'cash');
-    expect(lastEvent.amountTendered, 23.0);
+    expect(lastEvent.payments.length, 1);
+    expect(lastEvent.payments.first.method, 'cash');
+    expect(lastEvent.payments.first.amount, 23.0);
   });
 }

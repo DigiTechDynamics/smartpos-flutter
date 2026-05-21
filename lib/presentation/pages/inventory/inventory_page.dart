@@ -13,6 +13,8 @@ import '../../widgets/common/manager_override_dialog.dart';
 
 enum InventoryFilter { all, lowStock, outOfStock }
 
+enum ViewMode { list, grid }
+
 class InventoryPage extends StatefulWidget {
   const InventoryPage({super.key});
 
@@ -26,6 +28,7 @@ class _InventoryPageState extends State<InventoryPage> {
   Map<String, double> _stockMap = {};
   final _searchController = TextEditingController();
   InventoryFilter _currentFilter = InventoryFilter.all;
+  ViewMode _viewMode = ViewMode.list;
 
   @override
   void initState() {
@@ -486,6 +489,15 @@ class _InventoryPageState extends State<InventoryPage> {
             icon: const Icon(Icons.refresh),
             onPressed: _loadProducts,
           ),
+          IconButton(
+            icon: Icon(_viewMode == ViewMode.list ? Icons.grid_view : Icons.list),
+            onPressed: () {
+              setState(() {
+                _viewMode = _viewMode == ViewMode.list ? ViewMode.grid : ViewMode.list;
+              });
+            },
+            tooltip: 'Toggle view mode',
+          ),
         ],
       ),
       body: Column(
@@ -553,61 +565,77 @@ class _InventoryPageState extends State<InventoryPage> {
                    return const Center(child: Text('No products found matching criteria.'));
                 }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  itemCount: displayProducts.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final product = displayProducts[index];
-                    final qty = _stockMap[product.id] ?? 0.0;
-                    
-                    Color badgeColor;
-                    Color badgeTextColor;
-                    String badgeLabel;
-                    
-                    if (qty <= 0) {
-                      badgeColor = Colors.red.shade50;
-                      badgeTextColor = Colors.red.shade800;
-                      badgeLabel = 'Out of stock';
-                    } else if (qty <= 5) {
-                      badgeColor = Colors.orange.shade50;
-                      badgeTextColor = Colors.orange.shade800;
-                      badgeLabel = 'Low stock (${qty.toStringAsFixed(0)})';
-                    } else {
-                      badgeColor = Colors.green.shade50;
-                      badgeTextColor = Colors.green.shade800;
-                      badgeLabel = 'In stock (${qty.toStringAsFixed(0)})';
-                    }
-
-                    return Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.grey.shade200, width: 1),
-                      ),
-                      margin: EdgeInsets.zero,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            _buildProductAvatar(product),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    product.name,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        'SKU: ${product.sku}',
-                                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                                      ),
-                                      if (product.category != null && product.category!.isNotEmpty) ...[
+                if (_viewMode == ViewMode.list) {
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    itemCount: displayProducts.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final product = displayProducts[index];
+                      final qty = _stockMap[product.id] ?? 0.0;
+                      
+                      Color badgeColor;
+                      Color badgeTextColor;
+                      String badgeLabel;
+                      
+                      if (qty <= 0) {
+                        badgeColor = Colors.red.shade50;
+                        badgeTextColor = Colors.red.shade800;
+                        badgeLabel = 'Out of stock';
+                      } else if (qty <= 5) {
+                        badgeColor = Colors.orange.shade50;
+                        badgeTextColor = Colors.orange.shade800;
+                        badgeLabel = 'Low stock (${qty.toStringAsFixed(0)})';
+                      } else {
+                        badgeColor = Colors.green.shade50;
+                        badgeTextColor = Colors.green.shade800;
+                        badgeLabel = 'In stock (${qty.toStringAsFixed(0)})';
+                      }
+                      
+                      return Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey.shade200, width: 1),
+                        ),
+                        margin: EdgeInsets.zero,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            children: [
+                              _buildProductAvatar(product),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      product.name,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'SKU: ${product.sku}',
+                                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                        ),
+                                        if (product.category != null && product.category!.isNotEmpty) ...[
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            width: 4,
+                                            height: 4,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade400,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            product.category!,
+                                            style: TextStyle(color: Colors.blue.shade600, fontSize: 12, fontWeight: FontWeight.w500),
+                                          ),
+                                        ],
                                         const SizedBox(width: 8),
                                         Container(
                                           width: 4,
@@ -619,87 +647,193 @@ class _InventoryPageState extends State<InventoryPage> {
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          product.category!,
-                                          style: TextStyle(color: Colors.blue.shade600, fontSize: 12, fontWeight: FontWeight.w500),
+                                          '\$${product.sellingPrice.toStringAsFixed(2)}',
+                                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                                         ),
                                       ],
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        width: 4,
-                                        height: 4,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade400,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        '\$${product.sellingPrice.toStringAsFixed(2)}',
-                                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                                      ),
-                                    ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: badgeColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  badgeLabel,
+                                  style: TextStyle(
+                                    color: badgeTextColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade400, size: 24),
+                                    onPressed: () => _quickAdjustStock(product, -1),
+                                    tooltip: 'Decrease by 1',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.add_circle_outline, color: Colors.green.shade400, size: 24),
+                                    onPressed: () => _quickAdjustStock(product, 1),
+                                    tooltip: 'Increase by 1',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.symmetric(horizontal: 4),
                                   ),
                                 ],
                               ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: badgeColor,
-                                borderRadius: BorderRadius.circular(8),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                                onPressed: () => _showAddEditProductDialog(product: product),
+                                tooltip: 'Edit Product',
+                                constraints: const BoxConstraints(),
+                                padding: EdgeInsets.zero,
                               ),
-                              child: Text(
-                                badgeLabel,
-                                style: TextStyle(
-                                  color: badgeTextColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11,
-                                ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.inventory_outlined, color: Colors.orange, size: 20),
+                                onPressed: () => _showAdjustStockDialog(product),
+                                tooltip: 'Detailed Adjust',
+                                constraints: const BoxConstraints(),
+                                padding: EdgeInsets.zero,
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Quick adjust buttons
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade400, size: 24),
-                                  onPressed: () => _quickAdjustStock(product, -1),
-                                  tooltip: 'Decrease by 1',
-                                  constraints: const BoxConstraints(),
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.add_circle_outline, color: Colors.green.shade400, size: 24),
-                                  onPressed: () => _quickAdjustStock(product, 1),
-                                  tooltip: 'Increase by 1',
-                                  constraints: const BoxConstraints(),
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
-                              onPressed: () => _showAddEditProductDialog(product: product),
-                              tooltip: 'Edit Product',
-                              constraints: const BoxConstraints(),
-                              padding: EdgeInsets.zero,
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.inventory_outlined, color: Colors.orange, size: 20),
-                              onPressed: () => _showAdjustStockDialog(product),
-                              tooltip: 'Detailed Adjust',
-                              constraints: const BoxConstraints(),
-                              padding: EdgeInsets.zero,
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                );
+                      );
+                    },
+                  );
+                } else {
+                  return GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 3/2,
+                    ),
+                    itemCount: displayProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = displayProducts[index];
+                      final qty = _stockMap[product.id] ?? 0.0;
+                      
+                      Color badgeColor;
+                      Color badgeTextColor;
+                      String badgeLabel;
+                      
+                      if (qty <= 0) {
+                        badgeColor = Colors.red.shade50;
+                        badgeTextColor = Colors.red.shade800;
+                        badgeLabel = 'Out of stock';
+                      } else if (qty <= 5) {
+                        badgeColor = Colors.orange.shade50;
+                        badgeTextColor = Colors.orange.shade800;
+                        badgeLabel = 'Low stock (${qty.toStringAsFixed(0)})';
+                      } else {
+                        badgeColor = Colors.green.shade50;
+                        badgeTextColor = Colors.green.shade800;
+                        badgeLabel = 'In stock (${qty.toStringAsFixed(0)})';
+                      }
+                      
+                      return Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey.shade200, width: 1),
+                        ),
+                        margin: EdgeInsets.zero,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildProductAvatar(product),
+                              const SizedBox(height: 8),
+                              Text(
+                                product.name,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'SKU: ${product.sku}',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                              ),
+                              if (product.category != null && product.category!.isNotEmpty)
+                                Text(
+                                  product.category!,
+                                  style: TextStyle(color: Colors.blue.shade600, fontSize: 12, fontWeight: FontWeight.w500),
+                                ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '\$${product.sellingPrice.toStringAsFixed(2)}',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: badgeColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  badgeLabel,
+                                  style: TextStyle(
+                                    color: badgeTextColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                              const Spacer(),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade400, size: 24),
+                                    onPressed: () => _quickAdjustStock(product, -1),
+                                    tooltip: 'Decrease by 1',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.add_circle_outline, color: Colors.green.shade400, size: 24),
+                                    onPressed: () => _quickAdjustStock(product, 1),
+                                    tooltip: 'Increase by 1',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                                    onPressed: () => _showAddEditProductDialog(product: product),
+                                    tooltip: 'Edit Product',
+                                    constraints: const BoxConstraints(),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.inventory_outlined, color: Colors.orange, size: 20),
+                                    onPressed: () => _showAdjustStockDialog(product),
+                                    tooltip: 'Detailed Adjust',
+                                    constraints: const BoxConstraints(),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }
               },
             ),
           ),
