@@ -1,5 +1,6 @@
 import '../../repositories/sale_repository.dart';
 import '../../repositories/inventory_repository.dart';
+import '../../repositories/user_repository.dart';
 import '../../../data/databases/app_database.dart';
 
 class CartItem {
@@ -35,8 +36,9 @@ class CreateSaleParams {
 class CreateSaleUseCase {
   final SaleRepository saleRepository;
   final InventoryRepository inventoryRepository;
+  final UserRepository userRepository;
 
-  CreateSaleUseCase(this.saleRepository, this.inventoryRepository);
+  CreateSaleUseCase(this.saleRepository, this.inventoryRepository, this.userRepository);
 
   Future<Sale> execute(CreateSaleParams params) async {
     if (params.items.isEmpty) {
@@ -58,7 +60,7 @@ class CreateSaleUseCase {
       discount: params.discountAmount,
       total: total,
       paymentMethod: params.paymentMethod,
-      userId: 'current_user_id', // Should be injected via Auth
+      userId: (await userRepository.getCurrentUser())?.id ?? 'unknown_user',
       createdAt: DateTime.now().millisecondsSinceEpoch,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
       syncStatus: 'pending',
@@ -82,18 +84,8 @@ class CreateSaleUseCase {
       taxAmount: 0.0,
     )).toList();
 
-    // 1. Create Sale
+    // 1. Create Sale (which atomically updates inventory)
     final createdSale = await saleRepository.create(sale, saleItems, payment);
-
-    // 2. Adjust Inventory for all items
-    for (var item in params.items) {
-      await inventoryRepository.adjustStock(
-        item.productId, 
-        -item.quantity, 
-        'sale', 
-        sale.userId,
-      );
-    }
 
     return createdSale;
   }

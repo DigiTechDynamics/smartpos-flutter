@@ -7,6 +7,7 @@ import 'package:smartpos/domain/usecases/sales/create_sale_usecase.dart';
 import 'package:smartpos/data/databases/app_database.dart';
 import 'package:smartpos/domain/repositories/sale_repository.dart';
 import 'package:smartpos/domain/repositories/inventory_repository.dart';
+import 'package:smartpos/domain/repositories/user_repository.dart';
 
 class MockCreateSaleUseCase implements CreateSaleUseCase {
   bool executeShouldFail = false;
@@ -17,6 +18,9 @@ class MockCreateSaleUseCase implements CreateSaleUseCase {
 
   @override
   InventoryRepository get inventoryRepository => throw UnimplementedError();
+
+  @override
+  UserRepository get userRepository => throw UnimplementedError();
 
   @override
   Future<Sale> execute(CreateSaleParams params) async {

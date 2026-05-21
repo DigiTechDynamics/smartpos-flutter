@@ -5,8 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:drift/drift.dart' show Value, InsertMode;
 import '../../data/databases/app_database.dart';
 import 'local_storage_service.dart';
-import 'bluetooth_service.dart';
+import 'printer_service.dart';
 import 'sync_service.dart';
+import 'background_sync_service.dart';
 import 'analytics_service.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../data/repositories/product_repository_impl.dart';
@@ -39,8 +40,9 @@ Future<void> initServiceLocator() async {
   
   // Register Core Services
   sl.registerLazySingleton<LocalStorageService>(() => LocalStorageService(sl()));
-  sl.registerLazySingleton<BluetoothService>(() => BluetoothService());
+  sl.registerLazySingleton<PrinterService>(() => PrinterService());
   sl.registerLazySingleton<SyncService>(() => SyncService(sl()));
+  sl.registerLazySingleton<BackgroundSyncService>(() => BackgroundSyncService());
   sl.registerLazySingleton<AnalyticsService>(() => AnalyticsService(sl()));
   
   // Register Repositories
@@ -53,7 +55,7 @@ Future<void> initServiceLocator() async {
   
   // Register Use Cases
   sl.registerLazySingleton<CreateSaleUseCase>(
-      () => CreateSaleUseCase(sl<SaleRepository>(), sl<InventoryRepository>()));
+      () => CreateSaleUseCase(sl<SaleRepository>(), sl<InventoryRepository>(), sl<UserRepository>()));
   sl.registerLazySingleton<VoidSaleUseCase>(
       () => VoidSaleUseCase(sl<SaleRepository>()));
   sl.registerLazySingleton<AdjustStockUseCase>(

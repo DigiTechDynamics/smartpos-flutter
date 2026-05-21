@@ -32,3 +32,10 @@ class ProcessPayment extends SaleEvent {
 }
 
 class ClearCart extends SaleEvent {}
+
+class ParkSale extends SaleEvent {}
+
+class RestoreParkedSale extends SaleEvent {
+  final int index;
+  RestoreParkedSale(this.index);
+}

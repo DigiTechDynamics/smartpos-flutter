@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../bloc/auth/auth_event.dart';
 
@@ -77,13 +78,95 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final selectedIndex = _selectedIndex(context);
+    final isWide = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
-      body: widget.child,
-      bottomNavigationBar: _FloatingNavBar(
-        selectedIndex: selectedIndex,
-        onTap: (i) => _navigate(i, context),
+      extendBody: true, // Content will scroll behind the floating nav bar
+      body: isWide
+          ? SafeArea(
+              child: Row(
+                children: [
+                  _FloatingSideNavBar(
+                    selectedIndex: selectedIndex,
+                    onTap: (i) => _navigate(i, context),
+                  ),
+                  Expanded(child: widget.child),
+                ],
+              ),
+            )
+          : widget.child,
+      bottomNavigationBar: isWide
+          ? null
+          : Theme(
+              data: Theme.of(context).copyWith(
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+              ),
+              child: _FloatingNavBar(
+                selectedIndex: selectedIndex,
+                onTap: (i) => _navigate(i, context),
+              ),
+            ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+//  Floating Side Navigation Bar (For Wide Screens)
+// ─────────────────────────────────────────
+class _FloatingSideNavBar extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+
+  const _FloatingSideNavBar({
+    required this.selectedIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        child: Center(
+          child: Container(
+            width: 80,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E2C),
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.28),
+                  blurRadius: 24,
+                  offset: const Offset(4, 4),
+                ),
+                BoxShadow(
+                  color: Colors.blue.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(2, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(_destinations.length, (i) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: SizedBox(
+                    height: 70,
+                    child: _FloatingNavItem(
+                      dest: _destinations[i],
+                      isSelected: selectedIndex == i,
+                      onTap: () => onTap(i),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -166,9 +249,16 @@ class _FloatingNavItem extends StatelessWidget {
     const inactiveColor = Color(0xFF7A7F9A);
     const activeBg = Color(0xFF2A2E45);
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+    return Semantics(
+      label: dest.label,
+      selected: isSelected,
+      button: true,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeInOut,
@@ -206,6 +296,8 @@ class _FloatingNavItem extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }
+}
+

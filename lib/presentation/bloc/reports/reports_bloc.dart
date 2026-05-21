@@ -43,7 +43,8 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
         ..limit(10);
       final recentSales = await recentSalesQuery.get();
       final recentTransactions = recentSales.map((s) => {
-        'id': s.saleNumber,
+        'id': s.id,
+        'saleNumber': s.saleNumber,
         'date': s.createdAt,
         'total': s.total,
         'method': s.paymentMethod,

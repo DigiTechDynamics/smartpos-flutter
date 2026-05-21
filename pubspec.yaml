@@ -78,6 +78,10 @@ dependencies:
   dartz: any
   crypto: any
   go_router: ^17.2.3
+  workmanager: ^0.9.0+3
+  connectivity_plus: ^7.1.1
+  usb_serial: ^0.5.2
+  wakelock_plus: ^1.6.1
 
 dev_dependencies:
   flutter_test:

@@ -2,7 +2,10 @@ import '../../../domain/usecases/sales/create_sale_usecase.dart';
 
 abstract class SaleState {}
 
-class SaleInitial extends SaleState {}
+class SaleInitial extends SaleState {
+  final List<List<CartItem>> parkedSales;
+  SaleInitial({this.parkedSales = const []});
+}
 
 class SaleInProgress extends SaleState {
   final List<CartItem> cartItems;
@@ -10,6 +13,7 @@ class SaleInProgress extends SaleState {
   final double tax;
   final double discountAmount;
   final double total;
+  final List<List<CartItem>> parkedSales;
 
   SaleInProgress({
     required this.cartItems,
@@ -17,6 +21,7 @@ class SaleInProgress extends SaleState {
     required this.tax,
     required this.discountAmount,
     required this.total,
+    this.parkedSales = const [],
   });
 }
 

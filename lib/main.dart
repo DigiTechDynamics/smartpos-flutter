@@ -9,6 +9,8 @@ import 'presentation/bloc/reports/reports_bloc.dart';
 import 'presentation/pages/auth/login_page.dart';
 import 'core/routes/app_router.dart';
 
+import 'core/services/background_sync_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -17,6 +19,15 @@ void main() async {
     debugPrint('Firebase initialization skipped or failed (config not loaded yet): $e');
   }
   await initServiceLocator();
+  
+  try {
+    final syncService = sl<BackgroundSyncService>();
+    await syncService.initialize();
+    syncService.registerPeriodicSync();
+  } catch (e) {
+    debugPrint('Failed to initialize BackgroundSyncService: $e');
+  }
+
   runApp(const SmartPOSApp());
 }
 

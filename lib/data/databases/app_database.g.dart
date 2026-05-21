@@ -642,6 +642,28 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _imageUrlMeta = const VerificationMeta(
+    'imageUrl',
+  );
+  @override
+  late final GeneratedColumn<String> imageUrl = GeneratedColumn<String>(
+    'image_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _sellingPriceMeta = const VerificationMeta(
     'sellingPrice',
   );
@@ -697,6 +719,8 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     id,
     sku,
     name,
+    category,
+    imageUrl,
     sellingPrice,
     costPrice,
     taxRate,
@@ -758,6 +782,18 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
       );
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    }
+    if (data.containsKey('image_url')) {
+      context.handle(
+        _imageUrlMeta,
+        imageUrl.isAcceptableOrUnknown(data['image_url']!, _imageUrlMeta),
+      );
     }
     if (data.containsKey('selling_price')) {
       context.handle(
@@ -827,6 +863,14 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      ),
+      imageUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_url'],
+      ),
       sellingPrice: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}selling_price'],
@@ -860,6 +904,8 @@ class Product extends DataClass implements Insertable<Product> {
   final String id;
   final String sku;
   final String name;
+  final String? category;
+  final String? imageUrl;
   final double sellingPrice;
   final double costPrice;
   final double taxRate;
@@ -872,6 +918,8 @@ class Product extends DataClass implements Insertable<Product> {
     required this.id,
     required this.sku,
     required this.name,
+    this.category,
+    this.imageUrl,
     required this.sellingPrice,
     required this.costPrice,
     required this.taxRate,
@@ -889,6 +937,12 @@ class Product extends DataClass implements Insertable<Product> {
     map['id'] = Variable<String>(id);
     map['sku'] = Variable<String>(sku);
     map['name'] = Variable<String>(name);
+    if (!nullToAbsent || category != null) {
+      map['category'] = Variable<String>(category);
+    }
+    if (!nullToAbsent || imageUrl != null) {
+      map['image_url'] = Variable<String>(imageUrl);
+    }
     map['selling_price'] = Variable<double>(sellingPrice);
     map['cost_price'] = Variable<double>(costPrice);
     map['tax_rate'] = Variable<double>(taxRate);
@@ -909,6 +963,12 @@ class Product extends DataClass implements Insertable<Product> {
       id: Value(id),
       sku: Value(sku),
       name: Value(name),
+      category: category == null && nullToAbsent
+          ? const Value.absent()
+          : Value(category),
+      imageUrl: imageUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageUrl),
       sellingPrice: Value(sellingPrice),
       costPrice: Value(costPrice),
       taxRate: Value(taxRate),
@@ -931,6 +991,8 @@ class Product extends DataClass implements Insertable<Product> {
       id: serializer.fromJson<String>(json['id']),
       sku: serializer.fromJson<String>(json['sku']),
       name: serializer.fromJson<String>(json['name']),
+      category: serializer.fromJson<String?>(json['category']),
+      imageUrl: serializer.fromJson<String?>(json['imageUrl']),
       sellingPrice: serializer.fromJson<double>(json['sellingPrice']),
       costPrice: serializer.fromJson<double>(json['costPrice']),
       taxRate: serializer.fromJson<double>(json['taxRate']),
@@ -948,6 +1010,8 @@ class Product extends DataClass implements Insertable<Product> {
       'id': serializer.toJson<String>(id),
       'sku': serializer.toJson<String>(sku),
       'name': serializer.toJson<String>(name),
+      'category': serializer.toJson<String?>(category),
+      'imageUrl': serializer.toJson<String?>(imageUrl),
       'sellingPrice': serializer.toJson<double>(sellingPrice),
       'costPrice': serializer.toJson<double>(costPrice),
       'taxRate': serializer.toJson<double>(taxRate),
@@ -963,6 +1027,8 @@ class Product extends DataClass implements Insertable<Product> {
     String? id,
     String? sku,
     String? name,
+    Value<String?> category = const Value.absent(),
+    Value<String?> imageUrl = const Value.absent(),
     double? sellingPrice,
     double? costPrice,
     double? taxRate,
@@ -975,6 +1041,8 @@ class Product extends DataClass implements Insertable<Product> {
     id: id ?? this.id,
     sku: sku ?? this.sku,
     name: name ?? this.name,
+    category: category.present ? category.value : this.category,
+    imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
     sellingPrice: sellingPrice ?? this.sellingPrice,
     costPrice: costPrice ?? this.costPrice,
     taxRate: taxRate ?? this.taxRate,
@@ -991,6 +1059,8 @@ class Product extends DataClass implements Insertable<Product> {
       id: data.id.present ? data.id.value : this.id,
       sku: data.sku.present ? data.sku.value : this.sku,
       name: data.name.present ? data.name.value : this.name,
+      category: data.category.present ? data.category.value : this.category,
+      imageUrl: data.imageUrl.present ? data.imageUrl.value : this.imageUrl,
       sellingPrice: data.sellingPrice.present
           ? data.sellingPrice.value
           : this.sellingPrice,
@@ -1010,6 +1080,8 @@ class Product extends DataClass implements Insertable<Product> {
           ..write('id: $id, ')
           ..write('sku: $sku, ')
           ..write('name: $name, ')
+          ..write('category: $category, ')
+          ..write('imageUrl: $imageUrl, ')
           ..write('sellingPrice: $sellingPrice, ')
           ..write('costPrice: $costPrice, ')
           ..write('taxRate: $taxRate, ')
@@ -1027,6 +1099,8 @@ class Product extends DataClass implements Insertable<Product> {
     id,
     sku,
     name,
+    category,
+    imageUrl,
     sellingPrice,
     costPrice,
     taxRate,
@@ -1043,6 +1117,8 @@ class Product extends DataClass implements Insertable<Product> {
           other.id == this.id &&
           other.sku == this.sku &&
           other.name == this.name &&
+          other.category == this.category &&
+          other.imageUrl == this.imageUrl &&
           other.sellingPrice == this.sellingPrice &&
           other.costPrice == this.costPrice &&
           other.taxRate == this.taxRate &&
@@ -1057,6 +1133,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<String> id;
   final Value<String> sku;
   final Value<String> name;
+  final Value<String?> category;
+  final Value<String?> imageUrl;
   final Value<double> sellingPrice;
   final Value<double> costPrice;
   final Value<double> taxRate;
@@ -1070,6 +1148,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     this.id = const Value.absent(),
     this.sku = const Value.absent(),
     this.name = const Value.absent(),
+    this.category = const Value.absent(),
+    this.imageUrl = const Value.absent(),
     this.sellingPrice = const Value.absent(),
     this.costPrice = const Value.absent(),
     this.taxRate = const Value.absent(),
@@ -1084,6 +1164,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     required String id,
     required String sku,
     required String name,
+    this.category = const Value.absent(),
+    this.imageUrl = const Value.absent(),
     required double sellingPrice,
     required double costPrice,
     this.taxRate = const Value.absent(),
@@ -1102,6 +1184,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     Expression<String>? id,
     Expression<String>? sku,
     Expression<String>? name,
+    Expression<String>? category,
+    Expression<String>? imageUrl,
     Expression<double>? sellingPrice,
     Expression<double>? costPrice,
     Expression<double>? taxRate,
@@ -1116,6 +1200,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       if (id != null) 'id': id,
       if (sku != null) 'sku': sku,
       if (name != null) 'name': name,
+      if (category != null) 'category': category,
+      if (imageUrl != null) 'image_url': imageUrl,
       if (sellingPrice != null) 'selling_price': sellingPrice,
       if (costPrice != null) 'cost_price': costPrice,
       if (taxRate != null) 'tax_rate': taxRate,
@@ -1132,6 +1218,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     Value<String>? id,
     Value<String>? sku,
     Value<String>? name,
+    Value<String?>? category,
+    Value<String?>? imageUrl,
     Value<double>? sellingPrice,
     Value<double>? costPrice,
     Value<double>? taxRate,
@@ -1146,6 +1234,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       id: id ?? this.id,
       sku: sku ?? this.sku,
       name: name ?? this.name,
+      category: category ?? this.category,
+      imageUrl: imageUrl ?? this.imageUrl,
       sellingPrice: sellingPrice ?? this.sellingPrice,
       costPrice: costPrice ?? this.costPrice,
       taxRate: taxRate ?? this.taxRate,
@@ -1178,6 +1268,12 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (imageUrl.present) {
+      map['image_url'] = Variable<String>(imageUrl.value);
+    }
     if (sellingPrice.present) {
       map['selling_price'] = Variable<double>(sellingPrice.value);
     }
@@ -1206,6 +1302,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
           ..write('id: $id, ')
           ..write('sku: $sku, ')
           ..write('name: $name, ')
+          ..write('category: $category, ')
+          ..write('imageUrl: $imageUrl, ')
           ..write('sellingPrice: $sellingPrice, ')
           ..write('costPrice: $costPrice, ')
           ..write('taxRate: $taxRate, ')
@@ -5932,6 +6030,8 @@ typedef $$ProductsTableCreateCompanionBuilder =
       required String id,
       required String sku,
       required String name,
+      Value<String?> category,
+      Value<String?> imageUrl,
       required double sellingPrice,
       required double costPrice,
       Value<double> taxRate,
@@ -5947,6 +6047,8 @@ typedef $$ProductsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> sku,
       Value<String> name,
+      Value<String?> category,
+      Value<String?> imageUrl,
       Value<double> sellingPrice,
       Value<double> costPrice,
       Value<double> taxRate,
@@ -6059,6 +6161,16 @@ class $$ProductsTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imageUrl => $composableBuilder(
+    column: $table.imageUrl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6202,6 +6314,16 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get imageUrl => $composableBuilder(
+    column: $table.imageUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get sellingPrice => $composableBuilder(
     column: $table.sellingPrice,
     builder: (column) => ColumnOrderings(column),
@@ -6254,6 +6376,12 @@ class $$ProductsTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get imageUrl =>
+      $composableBuilder(column: $table.imageUrl, builder: (column) => column);
 
   GeneratedColumn<double> get sellingPrice => $composableBuilder(
     column: $table.sellingPrice,
@@ -6384,6 +6512,8 @@ class $$ProductsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> sku = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<String?> category = const Value.absent(),
+                Value<String?> imageUrl = const Value.absent(),
                 Value<double> sellingPrice = const Value.absent(),
                 Value<double> costPrice = const Value.absent(),
                 Value<double> taxRate = const Value.absent(),
@@ -6397,6 +6527,8 @@ class $$ProductsTableTableManager
                 id: id,
                 sku: sku,
                 name: name,
+                category: category,
+                imageUrl: imageUrl,
                 sellingPrice: sellingPrice,
                 costPrice: costPrice,
                 taxRate: taxRate,
@@ -6412,6 +6544,8 @@ class $$ProductsTableTableManager
                 required String id,
                 required String sku,
                 required String name,
+                Value<String?> category = const Value.absent(),
+                Value<String?> imageUrl = const Value.absent(),
                 required double sellingPrice,
                 required double costPrice,
                 Value<double> taxRate = const Value.absent(),
@@ -6425,6 +6559,8 @@ class $$ProductsTableTableManager
                 id: id,
                 sku: sku,
                 name: name,
+                category: category,
+                imageUrl: imageUrl,
                 sellingPrice: sellingPrice,
                 costPrice: costPrice,
                 taxRate: taxRate,

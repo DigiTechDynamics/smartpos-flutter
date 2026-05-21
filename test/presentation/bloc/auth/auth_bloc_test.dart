@@ -50,6 +50,12 @@ class MockUserRepository implements UserRepository {
   Future<void> logout() async {
     currentUser = null;
   }
+
+  @override
+  Future<void> logAuditAction(String action, String details) async {}
+
+  @override
+  Future<List<AuditLogEntry>> getAuditLogs() async => [];
 }
 
 void main() {

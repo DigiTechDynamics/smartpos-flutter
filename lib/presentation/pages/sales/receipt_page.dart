@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../core/services/service_locator.dart';
-import '../../../core/services/bluetooth_service.dart';
+import '../../../core/services/printer_service.dart';
 import '../../../data/databases/app_database.dart';
 
 class ReceiptPage extends StatefulWidget {
@@ -71,7 +71,7 @@ class _ReceiptPageState extends State<ReceiptPage> {
   Future<void> _printReceipt(BuildContext context) async {
     if (_sale == null) return;
     try {
-      final bluetoothService = sl<BluetoothService>();
+      final printerService = sl<PrinterService>();
       
       final receipt = ReceiptData(
         storeName: 'SmartPOS Zimbabwe',
@@ -103,10 +103,8 @@ class _ReceiptPageState extends State<ReceiptPage> {
         change: widget.change,
       );
 
-      await bluetoothService.connectDevice('MockAddress');
-      final isConnected = await bluetoothService.isConnected();
-      if (isConnected) {
-        await bluetoothService.printReceipt(receipt);
+      if (printerService.isConnected) {
+        await printerService.printReceipt(receipt);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Receipt printed successfully!'), backgroundColor: Colors.green),

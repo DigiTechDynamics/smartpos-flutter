@@ -26,6 +26,8 @@ class Products extends Table with SyncMixin {
   TextColumn get id => text()();
   TextColumn get sku => text().unique()();
   TextColumn get name => text()();
+  TextColumn get category => text().nullable()();
+  TextColumn get imageUrl => text().nullable()();
   RealColumn get sellingPrice => real()();
   RealColumn get costPrice => real()();
   RealColumn get taxRate => real().withDefault(const Constant(0.0))();

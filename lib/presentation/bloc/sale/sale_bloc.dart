@@ -8,6 +8,7 @@ class SaleBloc extends Bloc<SaleEvent, SaleState> {
   
   List<CartItem> _cartItems = [];
   double _discountAmount = 0;
+  final List<List<CartItem>> _parkedSales = [];
 
   SaleBloc(this.createSaleUseCase) : super(SaleInitial()) {
     on<AddItemToCart>(_onAddItem);
@@ -16,6 +17,8 @@ class SaleBloc extends Bloc<SaleEvent, SaleState> {
     on<ApplyDiscount>(_onApplyDiscount);
     on<ProcessPayment>(_onProcessPayment);
     on<ClearCart>(_onClearCart);
+    on<ParkSale>(_onParkSale);
+    on<RestoreParkedSale>(_onRestoreParkedSale);
   }
 
   void _onAddItem(AddItemToCart event, Emitter<SaleState> emit) {
@@ -102,12 +105,35 @@ class SaleBloc extends Bloc<SaleEvent, SaleState> {
   void _onClearCart(ClearCart event, Emitter<SaleState> emit) {
     _cartItems.clear();
     _discountAmount = 0;
-    emit(SaleInitial());
+    emit(SaleInitial(parkedSales: List.from(_parkedSales)));
+  }
+
+  void _onParkSale(ParkSale event, Emitter<SaleState> emit) {
+    if (_cartItems.isNotEmpty) {
+      _parkedSales.add(List.from(_cartItems));
+      _cartItems.clear();
+      _discountAmount = 0;
+    }
+    emit(SaleInitial(parkedSales: List.from(_parkedSales)));
+  }
+
+  void _onRestoreParkedSale(RestoreParkedSale event, Emitter<SaleState> emit) {
+    if (event.index >= 0 && event.index < _parkedSales.length) {
+      // If we currently have an active cart, swap them (park current, restore selected)
+      if (_cartItems.isNotEmpty) {
+        final current = List<CartItem>.from(_cartItems);
+        _cartItems = _parkedSales[event.index];
+        _parkedSales[event.index] = current;
+      } else {
+        _cartItems = _parkedSales.removeAt(event.index);
+      }
+      _emitInProgress(emit);
+    }
   }
 
   void _emitInProgress(Emitter<SaleState> emit) {
     if (_cartItems.isEmpty) {
-      emit(SaleInitial());
+      emit(SaleInitial(parkedSales: List.from(_parkedSales)));
       return;
     }
     
@@ -121,6 +147,7 @@ class SaleBloc extends Bloc<SaleEvent, SaleState> {
       tax: tax,
       discountAmount: _discountAmount,
       total: total,
+      parkedSales: List.from(_parkedSales),
     ));
   }
 }

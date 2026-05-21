@@ -43,7 +43,7 @@ class AnalyticsService {
       ..where((tbl) => tbl.createdAt.isBetweenValues(
         start.millisecondsSinceEpoch, 
         end.millisecondsSinceEpoch
-      ));
+      ) & tbl.paymentMethod.equals('void').not());
     final sales = await query.get();
     return sales.fold<double>(0.0, (sum, sale) => sum + sale.total);
   }
@@ -53,7 +53,7 @@ class AnalyticsService {
       ..where((tbl) => tbl.createdAt.isBetweenValues(
         start.millisecondsSinceEpoch, 
         end.millisecondsSinceEpoch
-      ));
+      ) & tbl.paymentMethod.equals('void').not());
     final sales = await query.get();
     
     final breakdown = <String, Map<String, dynamic>>{};
@@ -72,7 +72,7 @@ class AnalyticsService {
       ..where((tbl) => tbl.createdAt.isBetweenValues(
         start.millisecondsSinceEpoch, 
         end.millisecondsSinceEpoch
-      ));
+      ) & tbl.paymentMethod.equals('void').not());
     final sales = await salesQuery.get();
     if (sales.isEmpty) return [];
 
@@ -165,7 +165,7 @@ class AnalyticsService {
       ..where((tbl) => tbl.createdAt.isBetweenValues(
         start.millisecondsSinceEpoch, 
         end.millisecondsSinceEpoch
-      ));
+      ) & tbl.paymentMethod.equals('void').not());
     final sales = await query.get();
 
     final salesByDay = <DateTime, double>{};
@@ -198,7 +198,7 @@ class AnalyticsService {
       ..where((tbl) => tbl.createdAt.isBetweenValues(
         startOfDay.millisecondsSinceEpoch, 
         endOfDay.millisecondsSinceEpoch
-      ));
+      ) & tbl.paymentMethod.equals('void').not());
     final sales = await query.get();
     
     final totalSales = sales.fold<double>(0.0, (sum, sale) => sum + sale.total);

@@ -6,6 +6,8 @@ import '../../bloc/sale/sale_event.dart';
 import '../../bloc/sale/sale_state.dart';
 import '../../widgets/sales/quick_checkout_panel.dart';
 import 'payment_page.dart';
+import '../../../core/services/service_locator.dart';
+import '../../../domain/repositories/inventory_repository.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -131,11 +133,26 @@ class CartPage extends StatelessWidget {
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.add),
-                                  onPressed: () {
-                                    context.read<SaleBloc>().add(
-                                          UpdateItemQuantity(
-                                              item.productId, item.quantity + 1),
+                                  onPressed: () async {
+                                    final stock = await sl<InventoryRepository>().getStock(item.productId);
+                                    final currentStockQty = stock?.quantityOnHand ?? 0.0;
+                                    if (item.quantity + 1 > currentStockQty) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Cannot add more. Insufficient stock (Only ${currentStockQty.toStringAsFixed(0)} available)'),
+                                            backgroundColor: Colors.redAccent,
+                                          ),
                                         );
+                                      }
+                                      return;
+                                    }
+                                    if (context.mounted) {
+                                      context.read<SaleBloc>().add(
+                                            UpdateItemQuantity(
+                                                item.productId, item.quantity + 1),
+                                          );
+                                    }
                                   },
                                 ),
                               ],

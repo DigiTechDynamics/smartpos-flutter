@@ -8,4 +8,6 @@ abstract class UserRepository {
   Future<List<User>> getEmployees();
   Future<bool> hasPermission(User user, String permission);
   Future<void> logout();
+  Future<void> logAuditAction(String action, String details);
+  Future<List<AuditLogEntry>> getAuditLogs();
 }
